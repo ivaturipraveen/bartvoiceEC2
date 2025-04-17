@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BART Voice Assistant</title>
+  <script src="https://cdn.jsdelivr.net/npm/hark/hark.bundle.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #000000;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 10px;
+      color: #00c2cb;
+    }
+
+    .status {
+      margin-top: 15px;
+      font-size: 1rem;
+      color: #ffe600;
+    }
+
+    /* Voice orb with enhanced design */
+    .voice-orb {
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      position: relative;
+      background: radial-gradient(circle at center, #ffffff 0%, #7ab7ff 40%, #0066ff 100%);
+      box-shadow: 0 0 30px rgba(0, 102, 255, 0.5);
+      animation: pulse 3s infinite ease-in-out;
+      transition: all 0.5s ease;
+      overflow: hidden;
+      margin: 20px auto;
+    }
+
+    /* Particles container inside orb */
+    .particles {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Generate multiple particle elements using pseudo-elements */
+    .particles::before, 
+    .particles::after {
+      content: '';
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    }
+
+    /* First particle */
+    .particles::before {
+      top: 30%;
+      left: 20%;
+      animation: floatParticle 5s infinite ease-in-out;
+    }
+
+    /* Second particle */
+    .particles::after {
+      bottom: 40%;
+      right: 25%;
+      width: 6px;
+      height: 6px;
+      animation: floatParticle 4s 1s infinite ease-in-out alternate;
+    }
+
+    /* Generate additional particles with unique animations */
+    .voice-orb::before {
+      content: '';
+      position: absolute;
+      top: 15%;
+      left: 15%;
+      width: 70%;
+      height: 70%;
+      border-radius: 50%;
+      background: radial-gradient(circle at center, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.1) 70%, transparent 100%);
+      filter: blur(5px);
+    }
+
+    /* Additional particles */
+    .voice-orb .particles::after {
+      box-shadow: 
+        150px 70px 0 -2px rgba(255, 255, 255, 0.6),
+        -120px 100px 0 -1px rgba(255, 255, 255, 0.5),
+        40px -70px 0 0px rgba(255, 255, 255, 0.7);
+    }
+
+    /* Particle animation */
+    @keyframes floatParticle {
+      0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 0.7;
+      }
+      50% {
+        transform: translate(10px, 10px) scale(1.2);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(0, 0) scale(1);
+        opacity: 0.7;
+      }
+    }
+
+    /* Processing state specific particle effects */
+    .voice-orb.processing .particles::before,
+    .voice-orb.processing .particles::after {
+      background-color: rgba(0, 255, 140, 0.8);
+      box-shadow: 0 0 10px rgba(0, 255, 140, 0.8);
+      animation-duration: 2s;
+    }
+
+    /* Listening state specific particle effects */
+    .voice-orb.listening .particles::before,
+    .voice-orb.listening .particles::after {
+      background-color: rgba(255, 73, 97, 0.8);
+      box-shadow: 0 0 10px rgba(255, 73, 97, 0.8);
+      animation-duration: 1.5s;
+    }
+
+    /* Animations */
+    @keyframes pulse {
+      0% {
+        opacity: 0.8;
+        transform: scale(0.95);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      100% {
+        opacity: 0.8;
+        transform: scale(0.95);
+      }
+    }
+
+    /* Enhanced animation for orb when processing */
+    .voice-orb.processing {
+      background: radial-gradient(circle at center, #ffffff 0%, #7aff9e 40%, #00ff66 100%);
+      box-shadow: 0 0 40px rgba(0, 255, 102, 0.6);
+      animation: processingOrb 1.5s infinite linear;
+    }
+
+    /* Enhanced animation for orb when listening */
+    .voice-orb.listening {
+      background: radial-gradient(circle at center, #ffffff 0%, #ff7ab7 40%, #ff0066 100%);
+      box-shadow: 0 0 40px rgba(255, 0, 102, 0.6);
+      animation: listeningOrb 2s infinite alternate ease-in-out;
+    }
+
+    @keyframes processingOrb {
+      0% {
+        transform: scale(0.95) rotate(0deg);
+      }
+      50% {
+        transform: scale(1.05) rotate(180deg);
+      }
+      100% {
+        transform: scale(0.95) rotate(360deg);
+      }
+    }
+
+    @keyframes listeningOrb {
+      0% {
+        transform: scale(0.9) rotate(-5deg);
+        box-shadow: 0 0 20px rgba(255, 0, 102, 0.5);
+      }
+      50% {
+        transform: scale(1.1) rotate(0deg);
+        box-shadow: 0 0 50px rgba(255, 0, 102, 0.8);
+      }
+      100% {
+        transform: scale(0.9) rotate(5deg);
+        box-shadow: 0 0 20px rgba(255, 0, 102, 0.5);
+      }
+    }
+
+    /* Create pulsating waves around the orb */
+    .voice-orb::after {
+      content: '';
+      position: absolute;
+      top: -20px;
+      left: -20px;
+      right: -20px;
+      bottom: -20px;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      animation: pulseWave 3s infinite ease-out;
+    }
+
+    @keyframes pulseWave {
+      0% {
+        transform: scale(0.9);
+        opacity: 0.7;
+      }
+      50% {
+        transform: scale(1.15);
+        opacity: 0.3;
+      }
+      100% {
+        transform: scale(1.3);
+        opacity: 0;
+      }
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>BART Voice Assistant 🎧</h1>
+  
+  <div class="voice-orb">
+    <div class="particles"></div>
+  </div>
+  
+  <div class="status" id="status">Ready to listen</div>
+
+  <script>
+    const socket = new WebSocket("ws://3.227.232.209:8000/ws/audio");
+    
+    socket.binaryType = "arraybuffer";
+
+    const statusDiv = document.getElementById("status");
+    const voiceOrb = document.querySelector(".voice-orb");
+
+    let isRecording = false;
+    let audioContext;
+    let mediaStream = null;
+    let speechContext = null;
+    let audioChunks = [];
+    let mediaRecorder = null;
+    let audioInitialized = false;
+
+    // Audio queue management
+    const audioQueue = [];
+    let isPlaying = false;
+    let currentAudioSource = null; // Track the current audio source for interruption
+    
+    // Message queue for sequential processing
+    const messageQueue = [];
+    let isProcessingMessage = false;
+    
+    // Speech detection settings
+    const SPEECH_THRESHOLD = -50; // Lower threshold for more sensitive detection
+    const SPEECH_INTERVAL = 50;   // Faster interval for quicker detection
+    const SPEECH_PAUSE_THRESHOLD = 300; // ms to wait before considering speech ended
+    
+    // Process the next message in the queue
+    async function processNextMessage() {
+      if (messageQueue.length === 0) {
+        isProcessingMessage = false;
+        return;
+      }
+      
+      isProcessingMessage = true;
+      const message = messageQueue.shift();
+      
+      try {
+        await processAudioMessage(message);
+      } catch (error) {
+        console.error(`Error processing message: ${error.message}`);
+      }
+      
+      // Process the next message
+      processNextMessage();
+    }
+    
+    // Function to process a single audio message
+    async function processAudioMessage(event) {
+      // Ensure event.data is treated as an ArrayBuffer
+      let arrayBuffer;
+      if (event.data instanceof Blob) {
+        console.log(`Processing blob of size: ${event.data.size} bytes and type: ${event.data.type}`);
+        arrayBuffer = await event.data.arrayBuffer();
+      } else if (event.data instanceof ArrayBuffer) {
+        console.log(`Processing ArrayBuffer of size: ${event.data.byteLength} bytes`);
+        arrayBuffer = event.data;
+      } else {
+        console.log(`Received non-binary message: ${typeof event.data}`);
+        return;
+      }
+
+      // Check if we have any data
+      if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+        console.log("Received empty audio data");
+        return;
+      }
+      
+      console.log(`Decoding ${arrayBuffer.byteLength} bytes of audio data...`);
+      
+      // Create a new audio context if needed
+      if (!window.audioCtx) {
+        window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        console.log(`Created new AudioContext with sample rate: ${window.audioCtx.sampleRate}Hz`);
+      }
+      
+      try {
+        // Decode the audio (this awaits ensures sequential decoding)
+        const audioBuffer = await window.audioCtx.decodeAudioData(arrayBuffer);
+        console.log(`Successfully decoded audio: ${audioBuffer.duration.toFixed(2)}s`);
+        
+        // Add to queue and play if not already playing
+        queueAudio(audioBuffer);
+        statusDiv.textContent = "Assistant responding ✨";
+        voiceOrb.classList.add("processing");
+      } catch (decodeError) {
+        console.error(`Failed to decode audio: ${decodeError.message}`);
+        
+        // Try alternative playback with <audio> element
+        try {
+          // Create a promise that resolves when the audio finishes or errors
+          const playAudioElementPromise = new Promise((resolve, reject) => {
+            const blob = new Blob([arrayBuffer], { type: 'audio/mp3' });
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            
+            // Set up event handlers
+            audio.onended = () => {
+              URL.revokeObjectURL(url);
+              resolve();
+            };
+            
+            audio.onerror = (e) => {
+              const errorMsg = e.message || 'Unknown error';
+              console.error(`Audio element error: ${errorMsg}`);
+              URL.revokeObjectURL(url);
+              reject(new Error(errorMsg));
+            };
+            
+            // Only play if nothing else is playing
+            if (!isPlaying) {
+              isPlaying = true;
+              audio.play()
+                .then(() => {
+                  console.log("Playing audio via <audio> element");
+                  statusDiv.textContent = "Assistant responding ✨";
+                  voiceOrb.classList.add("processing");
+                })
+                .catch(err => {
+                  console.error(`Failed to play audio: ${err.message}`);
+                  reject(err);
+                });
+            } else {
+              // Add a dummy audio to the conceptual queue
+              console.log("Would queue audio for <audio> element, but not supported");
+              resolve(); // Just continue without actually playing
+            }
+          });
+          
+          // Wait for the audio to finish before continuing
+          await playAudioElementPromise;
+        } catch (audioError) {
+          console.error(`Alternative playback failed: ${audioError.message}`);
+        }
+      }
+    }
+    
+    // Function to play the next item in queue
+    async function playNextInQueue() {
+      if (audioQueue.length === 0) {
+        isPlaying = false;
+        console.log("Queue finished playing");
+        statusDiv.textContent = "Ready to listen";
+        voiceOrb.classList.remove("processing");
+        return;
+      }
+      
+      isPlaying = true;
+      const nextAudio = audioQueue.shift();
+      
+      try {
+        // Stop any currently playing audio
+        if (currentAudioSource) {
+          try {
+            currentAudioSource.stop();
+            console.log("Stopped previous audio source");
+          } catch (e) {
+            console.log("No previous audio to stop");
+          }
+        }
+        
+        // Create a new audio buffer source
+        const source = window.audioCtx.createBufferSource();
+        source.buffer = nextAudio;
+        source.connect(window.audioCtx.destination);
+        
+        // Store the current source for potential interruption
+        currentAudioSource = source;
+        
+        // When this chunk finishes, play the next one
+        source.onended = () => {
+          currentAudioSource = null;
+          playNextInQueue();
+        };
+        
+        // Start playing
+        source.start();
+        console.log(`Playing audio chunk (${nextAudio.duration.toFixed(2)}s, queue: ${audioQueue.length} remaining)`);
+      } catch (error) {
+        console.error(`Error playing audio: ${error.message}`);
+        // Continue with the next item even if this one failed
+        playNextInQueue();
+      }
+    }
+    
+    // Function to add audio to queue and start playing if needed
+    function queueAudio(audioBuffer) {
+      audioQueue.push(audioBuffer);
+      console.log(`Added audio to queue (${audioBuffer.duration.toFixed(2)}s, queue: ${audioQueue.length})`);
+      
+      // If not currently playing, start the queue
+      if (!isPlaying) {
+        playNextInQueue();
+      }
+    }
+
+    const log = (msg) => {
+      const ts = new Date().toLocaleTimeString();
+      console.log(`[${ts}] ${msg}`);
+    };
+
+    socket.onopen = () => {
+      log("WebSocket connected");
+      statusDiv.textContent = "Ready to listen";
+    };
+
+    socket.onclose = () => {
+      log("WebSocket disconnected");
+      statusDiv.textContent = "Disconnected";
+    };
+
+    // Message handler - add to queue for sequential processing
+    socket.onmessage = (event) => {
+      messageQueue.push(event);
+      console.log(`Added message to queue (queue size: ${messageQueue.length})`);
+      
+      // Start processing if not already doing so
+      if (!isProcessingMessage) {
+        processNextMessage();
+      }
+    };
+
+    // Initialize audio context
+    async function initAudioContext() {
+      try {
+        log("[Audio] Initializing audio context");
+        audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+        
+        // Force sample rate to 16kHz if needed
+        if (audioContext.sampleRate !== 16000) {
+          log(`[Audio] Resampling from ${audioContext.sampleRate}Hz to 16000Hz`);
+        }
+
+        log(`[Audio] AudioContext state: ${audioContext.state}`);
+        
+        // Setup audio pipeline
+        await setupAudioPipeline();
+        return true;
+      } catch (error) {
+        log(`[Error] Audio initialization failed: ${error.message}`);
+        statusDiv.textContent = "Please allow microphone access to use the voice assistant.";
+        return false;
+      }
+    }
+
+    async function setupAudioPipeline() {
+      try {
+        // Get user media with specific constraints for audio recording
+        mediaStream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            channelCount: 1,         // Mono
+            sampleRate: 16000,       // 16 kHz
+            sampleSize: 16,          // 16-bit
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          } 
+        });
+        
+        // Create speech detection using Hark with more sensitive settings
+        const options = {
+          threshold: SPEECH_THRESHOLD,
+          interval: SPEECH_INTERVAL,
+          play: false
+        };
+        
+        speechContext = hark(mediaStream, options);
+        
+        // Handle speech detection events
+        speechContext.on('speaking', () => {
+          log("[Speech] Speech detected");
+          
+          // If assistant is speaking, interrupt it
+          if (isPlaying) {
+            log("[Speech] Interrupting assistant response");
+            interruptAssistantResponse();
+          }
+          
+          // Start recording if not already recording
+          if (!isRecording) {
+            startRecording();
+          }
+        });
+        
+        speechContext.on('stopped_speaking', () => {
+          log("[Speech] Speech ended");
+          if (isRecording) {
+            stopRecording();
+          }
+        });
+        
+        log("[Audio] Audio pipeline initialized successfully");
+        statusDiv.textContent = "Ready to listen";
+        audioInitialized = true;
+      } catch (error) {
+        log(`[Error] Audio pipeline setup failed: ${error.message}`);
+        statusDiv.textContent = "Error setting up audio. Please reload the page and try again.";
+      }
+    }
+
+    function getSupportedMimeType() {
+      const types = [
+        'audio/webm',
+        'audio/webm;codecs=opus',
+        'audio/ogg;codecs=opus',
+        'audio/mp4',
+        'audio/mpeg'
+      ];
+      
+      for (const type of types) {
+        if (MediaRecorder.isTypeSupported(type)) {
+          log(`[Audio] Using supported MIME type: ${type}`);
+          return type;
+        }
+      }
+      
+      log("[Error] No supported MIME types found");
+      return '';
+    }
+
+    function startRecording() {
+      // Check if AudioContext is running
+      if (audioContext.state !== 'running') {
+        log(`[Audio] Cannot record, AudioContext state: ${audioContext.state}`);
+        audioContext.resume().then(() => {
+          log(`[Audio] AudioContext resumed: ${audioContext.state}`);
+          // Try again after resuming
+          setTimeout(startRecording, 100);
+        });
+        return;
+      }
+      
+      log("[Recording] Starting audio recording");
+      audioChunks = []; // Reset audio chunks array
+      isRecording = true;
+      voiceOrb.classList.add("listening");
+      statusDiv.textContent = "Listening...";
+
+      try {
+        // Get a supported MIME type
+        const mimeType = getSupportedMimeType();
+        if (!mimeType) {
+          throw new Error('No supported recording format available');
+        }
+        
+        // Create MediaRecorder with supported format
+        mediaRecorder = new MediaRecorder(mediaStream, {
+          mimeType: mimeType,
+          audioBitsPerSecond: 128000
+        });
+        
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunks.push(event.data);
+          }
+        };
+        
+        mediaRecorder.onstop = async () => {
+          if (audioChunks.length === 0) {
+            log("[Recording] No audio chunks captured");
+            statusDiv.textContent = "No audio detected. Please try again.";
+            return;
+          }
+          
+          // Create audio blob from chunks
+          const audioBlob = new Blob(audioChunks, { type: mimeType });
+          log(`[Recording] Captured audio: ${audioBlob.size} bytes`);
+          
+          // Process the audio file
+          processAudioData(audioBlob);
+        };
+        
+        // Start recording - capture data every 500ms for faster response
+        mediaRecorder.start(500);
+        log("[Recording] MediaRecorder started");
+        
+      } catch (error) {
+        log(`[Error] Failed to start recording: ${error.message}`);
+        isRecording = false;
+        voiceOrb.classList.remove("listening");
+        statusDiv.textContent = "Error starting recording. Please try again.";
+      }
+    }
+
+    function stopRecording() {
+      log("[Recording] Stopping audio recording");
+      isRecording = false;
+      voiceOrb.classList.remove("listening");
+      
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        log("[Recording] MediaRecorder stopped");
+        statusDiv.textContent = "Processing...";
+      } else {
+        log("[Recording] No active MediaRecorder");
+        statusDiv.textContent = "No audio detected. Please try again.";
+      }
+    }
+
+    async function processAudioData(audioBlob) {
+      try {
+        log("[Audio] Processing recorded audio");
+        voiceOrb.classList.add("processing");
+
+        // Convert to correct format for server (16kHz, 16-bit, mono PCM)
+        const audioBuffer = await audioBlobToBuffer(audioBlob);
+        log(`[Audio] Converted to AudioBuffer, duration: ${audioBuffer.duration.toFixed(2)}s`);
+        
+        // Convert AudioBuffer to raw PCM data
+        const pcmData = audioBufferToPcm(audioBuffer);
+        
+        // Send the PCM data directly to the WebSocket
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(pcmData.buffer);
+          log("[Audio] Sent PCM data to WebSocket");
+        } else {
+          log("[Error] WebSocket not open, cannot send audio data");
+        }
+        
+      } catch (error) {
+        log(`[Error] Audio processing failed: ${error.message}`);
+        statusDiv.textContent = "Error processing audio. Please try again.";
+        voiceOrb.classList.remove("processing");
+      }
+    }
+    
+    // Helper function to convert audio blob to AudioBuffer
+    function audioBlobToBuffer(blob) {
+      return new Promise((resolve, reject) => {
+        const fileReader = new FileReader();
+        fileReader.onload = async (event) => {
+          try {
+            const arrayBuffer = event.target.result;
+            // Decode the audio file data
+            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            resolve(audioBuffer);
+          } catch (error) {
+            reject(error);
+          }
+        };
+        fileReader.onerror = reject;
+        fileReader.readAsArrayBuffer(blob);
+      });
+    }
+    
+    // Helper function to convert AudioBuffer to 16-bit PCM
+    function audioBufferToPcm(audioBuffer) {
+      // Get the Float32 samples
+      const samples = audioBuffer.getChannelData(0);
+      
+      // Convert to Int16 (16-bit PCM)
+      const pcm = new Int16Array(samples.length);
+      for (let i = 0; i < samples.length; i++) {
+        // Convert float [-1, 1] to int16 [-32768, 32767]
+        const s = Math.max(-1, Math.min(1, samples[i]));
+        pcm[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+      }
+      
+      return pcm;
+    }
+
+    // Function to interrupt the assistant's response
+    function interruptAssistantResponse() {
+      // Stop current audio playback
+      if (currentAudioSource) {
+        try {
+          currentAudioSource.stop();
+          console.log("Interrupted current audio playback");
+        } catch (e) {
+          console.log("Error stopping audio source:", e);
+        }
+        currentAudioSource = null;
+      }
+      
+      // Clear the audio queue
+      audioQueue.length = 0;
+      isPlaying = false;
+      
+      // Update UI
+      voiceOrb.classList.remove("processing");
+      statusDiv.textContent = "Listening...";
+    }
+
+    // Initialize the application
+    initAudioContext();
+
+    // Add event listener for the document to resume AudioContext
+    document.addEventListener('click', () => {
+      if (audioContext && audioContext.state === 'suspended' && !audioInitialized) {
+        audioContext.resume().then(() => {
+          log(`[Audio] AudioContext resumed by click: ${audioContext.state}`);
+          if (!audioInitialized) {
+            setupAudioPipeline();
+          }
+        });
+      }
+    });
+
+    // Clean up resources when page is unloaded
+    window.addEventListener('beforeunload', () => {
+      log("[Cleanup] Cleaning up resources");
+      if (speechContext) {
+        speechContext.stop();
+      }
+      if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+      }
+      if (audioContext) {
+        audioContext.close();
+      }
+    });
+  </script>
+</body>
+</html>
